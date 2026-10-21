@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+<linearGradient id="gn-metal" x1="14.6%" y1="14.6%" x2="85.4%" y2="85.4%"><stop offset="0" stop-color="#f4f3f7"/><stop offset=".25" stop-color="#a3a0ad"/><stop offset=".5" stop-color="#3b3843"/><stop offset=".75" stop-color="#77737f"/><stop offset="1" stop-color="#211f27"/></linearGradient>
+<linearGradient id="gn-edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d4957"/><stop offset=".5" stop-color="#131118"/><stop offset="1" stop-color="#221f29"/></linearGradient>
+<radialGradient id="gn-glass" cx="42%" cy="40%" r="62%"><stop offset="0" stop-color="#ffe3f1"/><stop offset=".28" stop-color="#ff8fc0"/><stop offset=".62" stop-color="#e0168f"/><stop offset="1" stop-color="#5a2bff"/></radialGradient>
+<radialGradient id="gn-glow" cx="50%" cy="50%" r="50%"><stop offset=".55" stop-color="#e0168f" stop-opacity=".55"/><stop offset="1" stop-color="#e0168f" stop-opacity="0"/></radialGradient>
+</defs>
+<polygon points="176,64 336,64 448,176 448,336 336,448 176,448 64,336 64,176" fill="url(#gn-metal)"/>
+<polygon points="182,74 330,74 438,182 438,330 330,438 182,438 74,330 74,182" fill="url(#gn-edge)"/>
+<g fill="#a3a0ad" stroke="#3b3843" stroke-width="2"><circle cx="256" cy="70" r="5"/><circle cx="256" cy="442" r="5"/><circle cx="70" cy="256" r="5"/><circle cx="442" cy="256" r="5"/></g>
+<circle cx="256" cy="256" r="160" fill="#060509" stroke="#2a2631" stroke-width="8"/>
+<g><circle cx="256" cy="256" r="140.0" fill="none" stroke="#0b0a10" stroke-width="15.0" opacity="0.30"/><circle cx="256" cy="256" r="133.6" fill="none" stroke="#4a4456" stroke-width="2" opacity="0.7"/><circle cx="256" cy="256" r="118.5" fill="none" stroke="#0b0a10" stroke-width="15.0" opacity="0.40"/><circle cx="256" cy="256" r="112.0" fill="none" stroke="#4a4456" stroke-width="2" opacity="0.7"/><circle cx="256" cy="256" r="97.0" fill="none" stroke="#0b0a10" stroke-width="15.0" opacity="0.49"/><circle cx="256" cy="256" r="90.5" fill="none" stroke="#4a4456" stroke-width="2" opacity="0.7"/><circle cx="256" cy="256" r="75.5" fill="none" stroke="#0b0a10" stroke-width="15.0" opacity="0.59"/><circle cx="256" cy="256" r="69.0" fill="none" stroke="#4a4456" stroke-width="2" opacity="0.7"/></g>
+<circle cx="256" cy="256" r="98" fill="url(#gn-glow)"/>
+<circle cx="256" cy="256" r="70" fill="#000"/>
+<circle cx="256" cy="256" r="62" fill="url(#gn-glass)"/>
+<circle cx="256" cy="256" r="28.1" fill="#0a0612"/>
+<ellipse cx="236" cy="234" rx="22.7" ry="13.0" transform="rotate(-35 236 234)" fill="#ffe3f1" opacity=".9"/>
+<circle cx="272" cy="272" r="7.6" fill="#fff" opacity=".9"/>
+<path d="M120,120 Q256,190 392,120" fill="none" stroke="url(#gn-metal)" stroke-width="3" opacity=".4" stroke-linecap="round"/>
+<ellipse cx="180" cy="180" rx="60" ry="15" transform="rotate(-45 180 180)" fill="#fff" opacity=".15"/>
+</svg>
