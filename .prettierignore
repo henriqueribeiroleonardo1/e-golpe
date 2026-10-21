@@ -1,0 +1,4 @@
+dist
+node_modules
+public/e-golpe.js
+package-lock.json
