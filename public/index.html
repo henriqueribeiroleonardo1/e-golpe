@@ -1,0 +1,1586 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="claude:viewport-fit-sides" content="cover" />
+    <title>É Golpe?</title>
+    <meta
+      name="description"
+      content="Detector de golpes gratuito: encaminhe link, boleto ou Pix e receba um semáforo com o que fazer. Com os números do estelionato no Brasil."
+    />
+    <link rel="icon" type="image/svg+xml" href="logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600&family=Tektur:wght@500;700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Layout: grade bento de linhas finas sobre fundo quase preto, título gigante correndo de ponta a ponta,
+         faixas em degradê magenta e as planilhas do 171 com abas. Visual escuro único por escolha. */
+      :root {
+        --bg: #0d0d0f;
+        --panel: #121215;
+        --raise: #18181c;
+        --line: #2a2a30;
+        --line-soft: #1d1d22;
+        --fg: #f3f2f5;
+        --muted: #9997a3;
+        --dim: #5f5d68;
+        --pink: #ff8fc0;
+        --magenta: #e0168f;
+        --violet: #8a1fd6;
+        --indigo: #5a2bff;
+        --orange: #ff8a3d;
+        --go: #3ccf7e;
+        --wait: #f2b33d;
+        --stop: #ff5263;
+        --gradient: linear-gradient(90deg, var(--pink) 0%, var(--magenta) 42%, var(--violet) 78%, var(--indigo) 100%);
+        --orb: radial-gradient(
+          circle at 35% 35%,
+          #ff9a4a 0%,
+          var(--magenta) 45%,
+          var(--violet) 75%,
+          var(--indigo) 100%
+        );
+        --display: 'Unbounded', 'Arial Black', system-ui, sans-serif;
+        --block: 'Tektur', 'Arial Narrow', system-ui, sans-serif;
+        --body: 'Manrope', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+        --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        color-scheme: dark;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 15px/1.55 var(--body);
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+      a {
+        color: inherit;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1,
+      h2,
+      h3 {
+        text-wrap: balance;
+      }
+      :focus-visible {
+        outline: 2px solid var(--pink);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      ::selection {
+        background: var(--magenta);
+        color: #fff;
+      }
+
+      /* ---------- grade ---------- */
+      .frame {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+      }
+      .grid {
+        display: grid;
+        border-left: 1px solid var(--line);
+        border-top: 1px solid var(--line);
+      }
+      .cell {
+        position: relative;
+        min-width: 0;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        padding: 22px;
+      }
+      .dots {
+        background-image: radial-gradient(var(--line) 1px, transparent 1.2px);
+        background-size: 22px 22px;
+        background-position: 11px 11px;
+      }
+      .micro {
+        display: block;
+        font: 600 10.5px/1 var(--body);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .cell > .micro:first-child {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--line);
+        background: var(--bg);
+      }
+      .cell.has-label {
+        padding-top: 52px;
+      }
+      .outline {
+        color: transparent;
+        -webkit-text-stroke: 1.2px #d9d7de;
+        font-family: var(--display);
+        font-weight: 500;
+        line-height: 0.9;
+        letter-spacing: -0.02em;
+      }
+
+      /* ---------- topo ---------- */
+      .bar {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        z-index: 20;
+        background: rgb(13 13 15 / 0.82);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--line);
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0 0 auto;
+        height: env(safe-area-inset-top, 0px);
+        z-index: 21;
+        background: var(--bg);
+      }
+      .bar .frame {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding-block: 12px;
+      }
+      .logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        font: 600 15px/1 var(--display);
+        letter-spacing: -0.02em;
+      }
+      .logo svg {
+        width: 34px;
+        height: 34px;
+        filter: drop-shadow(0 4px 10px rgb(224 22 143 / 0.35));
+      }
+      .bar nav ul {
+        display: flex;
+        gap: 26px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        font: 600 11px/1 var(--body);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .bar nav a {
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .bar nav a:hover {
+        color: var(--fg);
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 42px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        font: 700 13.5px/1 var(--body);
+        letter-spacing: -0.005em;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          background 0.2s,
+          border-color 0.2s;
+      }
+      .btn svg {
+        width: 16px;
+        height: 16px;
+        flex: none;
+      }
+      .btn--grad {
+        background: var(--gradient);
+        color: #fff;
+        box-shadow: 0 8px 30px -10px rgb(224 22 143 / 0.7);
+      }
+      .btn--grad:hover {
+        transform: translateY(-1px);
+      }
+      .btn--line {
+        border-color: var(--line);
+        color: var(--fg);
+        background: transparent;
+      }
+      .btn--line:hover {
+        border-color: var(--dim);
+      }
+      .btn--sm {
+        height: 34px;
+        padding: 0 14px;
+        font-size: 12.5px;
+      }
+
+      /* ---------- hero ---------- */
+      .hero {
+        position: relative;
+        padding-top: 26px;
+      }
+      .hero::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto;
+        height: 340px;
+        background:
+          radial-gradient(60% 100% at 20% 0%, rgb(224 22 143 / 0.55), transparent 70%),
+          radial-gradient(50% 90% at 75% 0%, rgb(90 43 255 / 0.45), transparent 70%);
+        filter: blur(10px);
+        pointer-events: none;
+      }
+      .marquee {
+        position: relative;
+        overflow: hidden;
+        border-block: 1px solid var(--line);
+        padding-block: 6px 14px;
+        mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+      }
+      .marquee__track {
+        display: flex;
+        width: max-content;
+        animation: slide 38s linear infinite;
+      }
+      .marquee h1,
+      .marquee span {
+        flex: none;
+        padding-right: 0.55em;
+        font: 500 clamp(64px, 11.5vw, 168px) / 1 var(--display);
+        letter-spacing: -0.045em;
+        white-space: nowrap;
+      }
+      .marquee .ghost {
+        color: transparent;
+        -webkit-text-stroke: 1.4px rgb(243 242 245 / 0.55);
+      }
+      @keyframes slide {
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      .hero .grid {
+        position: relative;
+        grid-template-columns: 1.05fr 1.6fr 0.95fr;
+      }
+
+      .h-about {
+        grid-column: span 2;
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+        gap: 28px;
+        align-items: end;
+      }
+      .h-about p.lead {
+        font: 500 clamp(19px, 2vw, 24px) / 1.35 var(--body);
+        letter-spacing: -0.015em;
+      }
+      .h-about p.lead em {
+        font-style: normal;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .ctas {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .ticks {
+        list-style: none;
+        margin: 16px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .ticks li::before {
+        content: '→ ';
+        color: var(--pink);
+      }
+      .h-stat {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      .h-stat strong {
+        font: 500 clamp(52px, 5.4vw, 76px) / 0.9 var(--display);
+        letter-spacing: -0.05em;
+        font-variant-numeric: tabular-nums;
+      }
+      .h-stat p {
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      .h-stat a {
+        color: var(--dim);
+        font-size: 11.5px;
+      }
+
+      /* ---------- faixa ---------- */
+      .band {
+        margin-block: 56px;
+        background: var(--gradient);
+        overflow: hidden;
+      }
+      .band .frame {
+        display: flex;
+        justify-content: center;
+        gap: 0.6em;
+        padding-block: 22px;
+        font: 700 clamp(22px, 4.4vw, 58px) / 1 var(--block);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #120914;
+        white-space: nowrap;
+      }
+
+      /* ---------- seções ---------- */
+      .sec {
+        padding-block: 40px;
+        scroll-margin-top: 64px;
+      }
+      .sec-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 24px;
+        align-items: end;
+        margin-bottom: 26px;
+      }
+      .sec-head h2 {
+        font: 500 clamp(30px, 4vw, 52px) / 1.02 var(--display);
+        letter-spacing: -0.045em;
+      }
+      .sec-head p {
+        color: var(--muted);
+        max-width: 46ch;
+        justify-self: end;
+      }
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+        font: 700 12px/1 var(--block);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--pink);
+      }
+      .kicker::before {
+        content: '';
+        width: 22px;
+        height: 1px;
+        background: var(--pink);
+      }
+
+      /* ---------- demo ---------- */
+      .demo .grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+      textarea {
+        display: block;
+        width: 100%;
+        min-height: 230px;
+        resize: vertical;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        color: var(--fg);
+        font: 14.5px/1.55 var(--body);
+      }
+      textarea:focus {
+        outline: none;
+        border-color: var(--magenta);
+        box-shadow: 0 0 0 3px rgb(224 22 143 / 0.22);
+      }
+      .demo-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 10px;
+        font: 11.5px var(--mono);
+        color: var(--dim);
+      }
+      .examples {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .examples button {
+        height: 32px;
+        padding: 0 13px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--fg);
+        font: 600 12.5px var(--body);
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
+      }
+      .examples button:hover {
+        border-color: var(--dim);
+      }
+      .examples button[aria-pressed='true'] {
+        background: var(--fg);
+        color: var(--bg);
+        border-color: var(--fg);
+      }
+
+      .verdict {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px solid color-mix(in srgb, var(--level) 45%, var(--line));
+        background: linear-gradient(120deg, color-mix(in srgb, var(--level) 18%, transparent), transparent 70%);
+      }
+      .lamp {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        flex: none;
+        background: var(--level);
+        box-shadow:
+          0 0 0 6px color-mix(in srgb, var(--level) 20%, transparent),
+          0 0 26px var(--level);
+      }
+      .verdict h3 {
+        font: 500 20px/1.2 var(--display);
+        letter-spacing: -0.035em;
+      }
+      .score {
+        margin-left: auto;
+        text-align: right;
+        font: 600 10px/1 var(--body);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .score b {
+        display: block;
+        margin-top: 4px;
+        font: 500 26px/1 var(--display);
+        letter-spacing: -0.04em;
+        color: var(--fg);
+        font-variant-numeric: tabular-nums;
+      }
+      [data-level='danger'] {
+        --level: var(--stop);
+      }
+      [data-level='caution'] {
+        --level: var(--wait);
+      }
+      [data-level='safe'] {
+        --level: var(--go);
+      }
+      [data-level='inconclusive'] {
+        --level: var(--dim);
+      }
+      .r-block {
+        margin-top: 20px;
+      }
+      .r-block .micro {
+        margin-bottom: 10px;
+      }
+      .r-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+      }
+      .r-list li {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+        font-size: 14.5px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+      .sev {
+        flex: none;
+        width: 72px;
+        font: 500 10.5px/1 var(--mono);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .sev-critical,
+      .sev-high {
+        color: var(--stop);
+      }
+      .sev-medium {
+        color: var(--wait);
+      }
+      .sev-low {
+        color: var(--muted);
+      }
+      .sev-trust {
+        color: var(--go);
+      }
+      .finding::before {
+        content: '◆';
+        color: var(--magenta);
+        font-size: 9px;
+        flex: none;
+        transform: translateY(-2px);
+      }
+      .advice {
+        margin-top: 20px;
+        padding: 16px 18px;
+        border-radius: 10px;
+        background: var(--raise);
+        border-left: 3px solid var(--magenta);
+        font-size: 14.5px;
+      }
+      .advice b {
+        display: block;
+        margin-bottom: 4px;
+        font: 700 11px/1 var(--block);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--pink);
+      }
+      details {
+        margin-top: 12px;
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+      summary {
+        cursor: pointer;
+        font: 500 12.5px var(--mono);
+        color: var(--muted);
+      }
+      pre {
+        margin: 10px 0 0;
+        padding: 14px;
+        border-radius: 10px;
+        background: #08080a;
+        border: 1px solid var(--line-soft);
+        color: #e5e3ea;
+        font: 12.5px/1.55 var(--mono);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        max-height: 320px;
+        overflow: auto;
+      }
+
+      /* ---------- checa ---------- */
+      .checks .grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .check {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 300px;
+      }
+      .check .outline {
+        font-size: 58px;
+        margin-block: 8px 6px;
+      }
+      .check h3 {
+        font: 500 18px/1.2 var(--display);
+        letter-spacing: -0.03em;
+      }
+      .check p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .check code {
+        font: 12.5px var(--mono);
+        color: var(--pink);
+      }
+
+      /* ---------- acervo ---------- */
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      .acervo-tools {
+        display: grid;
+        gap: 16px;
+      }
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        height: 54px;
+        padding: 0 16px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+      .search:focus-within {
+        border-color: var(--magenta);
+        box-shadow: 0 0 0 3px rgb(224 22 143 / 0.22);
+      }
+      .search svg {
+        width: 18px;
+        height: 18px;
+        color: var(--muted);
+        flex: none;
+      }
+      .search input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: transparent;
+        color: var(--fg);
+        font: 500 15px var(--body);
+        outline: none;
+      }
+      .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chips button {
+        height: 32px;
+        padding: 0 13px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        font: 600 12.5px var(--body);
+        cursor: pointer;
+      }
+      .chips button:hover {
+        color: var(--fg);
+        border-color: var(--dim);
+      }
+      .chips button[aria-pressed='true'] {
+        background: var(--gradient);
+        border-color: transparent;
+        color: #fff;
+      }
+      .select {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .select select {
+        height: 34px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--fg);
+        font: 600 12.5px var(--body);
+      }
+      .acervo-count {
+        font: 12px var(--mono);
+        color: var(--dim);
+      }
+      .cases {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .case {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        border-left: 0;
+      }
+      .case::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 22px;
+        bottom: 22px;
+        width: 2px;
+        background: var(--risk);
+      }
+      .case[data-risk='alto'] {
+        --risk: var(--stop);
+      }
+      .case[data-risk='médio'] {
+        --risk: var(--wait);
+      }
+      .case-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+      .risk {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font: 600 11px/1 var(--body);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--risk);
+      }
+      .risk::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        background: var(--risk);
+      }
+      .case h3 {
+        font: 500 18px/1.25 var(--display);
+        letter-spacing: -0.03em;
+      }
+      .case > p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .origin {
+        font: 12px/1.45 var(--mono);
+        color: var(--pink);
+        overflow-wrap: anywhere;
+      }
+      .origin span {
+        color: var(--dim);
+      }
+      .case details {
+        margin-top: 0;
+      }
+      .case ul {
+        margin: 10px 0 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 4px;
+        font-size: 13.5px;
+        color: var(--fg);
+      }
+      .case h4 {
+        margin: 14px 0 0;
+      }
+      .case .btn {
+        margin-top: auto;
+        align-self: flex-start;
+      }
+      .empty {
+        grid-column: 1 / -1;
+        color: var(--muted);
+      }
+
+      /* ---------- planilhas ---------- */
+      .sheets .grid {
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+      }
+      .sheet {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .sheet-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+      }
+      .fx {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 32px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--bg);
+        font: 12px var(--mono);
+        color: var(--muted);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .fx b {
+        font-style: italic;
+        color: var(--pink);
+        font-weight: 500;
+      }
+      .fx span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .table-wrap {
+        overflow-x: auto;
+        flex: 1;
+      }
+      table.xl {
+        width: 100%;
+        border-collapse: collapse;
+        font: 13px/1.3 var(--mono);
+        font-variant-numeric: tabular-nums;
+      }
+      .xl th,
+      .xl td {
+        border-right: 1px solid var(--line-soft);
+        border-bottom: 1px solid var(--line-soft);
+        padding: 9px 12px;
+        text-align: left;
+        white-space: nowrap;
+      }
+      .xl thead th {
+        background: var(--panel);
+        color: var(--dim);
+        font-weight: 500;
+        font-size: 11px;
+        text-align: center;
+        padding-block: 6px;
+      }
+      .xl .rn {
+        width: 38px;
+        text-align: center;
+        color: var(--dim);
+        background: var(--panel);
+        font-size: 11px;
+      }
+      .xl tr.head td {
+        color: var(--muted);
+        font-weight: 500;
+        font-family: var(--body);
+        font-size: 12px;
+        letter-spacing: 0.02em;
+      }
+      .xl td.num {
+        text-align: right;
+      }
+      .xl tbody tr:not(.head):hover td:not(.rn) {
+        background: rgb(224 22 143 / 0.07);
+      }
+      .xl td.sel {
+        outline: 2px solid var(--magenta);
+        outline-offset: -2px;
+      }
+      .tabs {
+        display: flex;
+        gap: 0;
+        overflow-x: auto;
+        border-top: 1px solid var(--line);
+        background: var(--panel);
+      }
+      .tabs button {
+        flex: none;
+        padding: 11px 16px;
+        border: 0;
+        border-right: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        font: 600 12.5px var(--body);
+        cursor: pointer;
+      }
+      .tabs button[aria-selected='true'] {
+        background: var(--bg);
+        color: var(--fg);
+        box-shadow: inset 0 2px 0 var(--magenta);
+      }
+      .chart-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .chart-cell h3 {
+        font: 500 21px/1.2 var(--display);
+        letter-spacing: -0.035em;
+      }
+      .chart-cell .note {
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+      .chart {
+        width: 100%;
+      }
+      .chart svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
+      .chart text {
+        fill: var(--muted);
+        font: 11px var(--mono);
+      }
+      .chart .v {
+        fill: var(--fg);
+      }
+      .source {
+        margin-top: auto;
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .source a {
+        color: var(--muted);
+      }
+      .stats .grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .stat strong {
+        display: block;
+        font: 500 clamp(30px, 3.2vw, 44px) / 1 var(--display);
+        letter-spacing: -0.05em;
+        font-variant-numeric: tabular-nums;
+      }
+      .stat strong.grad {
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .stat p {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 13.5px;
+      }
+
+      /* ---------- faq ---------- */
+      .faq .grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+      .faq h3 {
+        font: 500 17px/1.3 var(--display);
+        letter-spacing: -0.03em;
+      }
+      .faq p {
+        margin-top: 10px;
+        color: var(--muted);
+        font-size: 14.5px;
+      }
+
+      /* ---------- rodapé ---------- */
+      footer {
+        position: relative;
+        margin-top: 64px;
+        border-top: 1px solid var(--line);
+        overflow: hidden;
+      }
+      footer::before {
+        content: '';
+        position: absolute;
+        inset: auto 0 0;
+        height: 70%;
+        background:
+          radial-gradient(50% 80% at 25% 100%, rgb(224 22 143 / 0.4), transparent 70%),
+          radial-gradient(50% 80% at 80% 100%, rgb(90 43 255 / 0.35), transparent 70%);
+        pointer-events: none;
+      }
+      .foot {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr 1fr;
+        gap: 28px;
+        padding-block: 44px 24px;
+      }
+      .foot .logo {
+        font-size: 18px;
+      }
+      .foot .logo svg {
+        width: 56px;
+        height: 56px;
+      }
+      .foot p {
+        color: var(--muted);
+        font-size: 13.5px;
+        max-width: 36ch;
+        margin-top: 14px;
+      }
+      .foot h4 {
+        margin: 0 0 14px;
+      }
+      .foot ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+        font-size: 14px;
+      }
+      .foot a {
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+      .foot a:hover {
+        color: var(--pink);
+      }
+      .wordmark {
+        position: relative;
+        display: block;
+        text-align: center;
+        font: 600 clamp(64px, 16vw, 236px) / 0.82 var(--display);
+        letter-spacing: -0.06em;
+        white-space: nowrap;
+        color: transparent;
+        -webkit-text-stroke: 1.3px rgb(243 242 245 / 0.5);
+        margin-bottom: -0.1em;
+        user-select: none;
+      }
+      .legal {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 10px;
+        padding-block: 18px;
+        border-top: 1px solid var(--line);
+        font: 11.5px var(--mono);
+        color: var(--dim);
+      }
+
+      /* ---------- responsivo ---------- */
+      @media (max-width: 1040px) {
+        .hero .grid {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        }
+        .h-about {
+          grid-column: 1 / -1;
+        }
+        .h-stat {
+          grid-column: 1 / -1;
+        }
+        .checks .grid,
+        .stats .grid,
+        .cases {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .sheets .grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .foot {
+          grid-template-columns: 1fr 1fr;
+        }
+        .bar nav {
+          display: none;
+        }
+      }
+      @media (max-width: 760px) {
+        .hero .grid,
+        .demo .grid,
+        .faq .grid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .h-about {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .sec-head {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .sec-head p {
+          justify-self: start;
+        }
+        .cell {
+          padding: 18px;
+        }
+        .cell.has-label {
+          padding-top: 48px;
+        }
+        .band .frame {
+          font-size: 22px;
+          justify-content: flex-start;
+        }
+      }
+      @media (max-width: 520px) {
+        .checks .grid,
+        .stats .grid,
+        .cases,
+        .foot {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .sev {
+          width: 60px;
+        }
+        .bar .btn {
+          display: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        .marquee__track,
+        .btn,
+        .examples button,
+        .bar nav a {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <!-- Placa de pare em metal escovado com uma lente no centro: o golpe é visto e barrado -->
+        <symbol id="mark" viewBox="0 0 512 512">
+          <defs>
+            <linearGradient id="mk-metal" x1="14.6%" y1="14.6%" x2="85.4%" y2="85.4%">
+              <stop offset="0" stop-color="#f4f3f7" />
+              <stop offset=".25" stop-color="#a3a0ad" />
+              <stop offset=".5" stop-color="#3b3843" />
+              <stop offset=".75" stop-color="#77737f" />
+              <stop offset="1" stop-color="#211f27" />
+            </linearGradient>
+            <linearGradient id="mk-edge" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#4d4957" />
+              <stop offset=".5" stop-color="#131118" />
+              <stop offset="1" stop-color="#221f29" />
+            </linearGradient>
+            <radialGradient id="mk-glass" cx="42%" cy="40%" r="62%">
+              <stop offset="0" stop-color="#ffe3f1" />
+              <stop offset=".28" stop-color="#ff8fc0" />
+              <stop offset=".62" stop-color="#e0168f" />
+              <stop offset="1" stop-color="#5a2bff" />
+            </radialGradient>
+            <radialGradient id="mk-glow" cx="50%" cy="50%" r="50%">
+              <stop offset=".55" stop-color="#e0168f" stop-opacity=".55" />
+              <stop offset="1" stop-color="#e0168f" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <polygon points="176,64 336,64 448,176 448,336 336,448 176,448 64,336 64,176" fill="url(#mk-metal)" />
+          <polygon points="182,74 330,74 438,182 438,330 330,438 182,438 74,330 74,182" fill="url(#mk-edge)" />
+          <g fill="#a3a0ad" stroke="#3b3843" stroke-width="2">
+            <circle cx="256" cy="70" r="5" />
+            <circle cx="256" cy="442" r="5" />
+            <circle cx="70" cy="256" r="5" />
+            <circle cx="442" cy="256" r="5" />
+          </g>
+          <circle cx="256" cy="256" r="160" fill="#060509" stroke="#2a2631" stroke-width="8" />
+          <g>
+            <circle cx="256" cy="256" r="140.0" fill="none" stroke="#0b0a10" stroke-width="15.0" opacity="0.30" />
+            <circle cx="256" cy="256" r="133.6" fill="none" stroke="#4a4456" stroke-width="2" opacity="0.7" />
+            <circle cx="256" cy="256" r="118.5" fill="none" stroke="#0b0a10" stroke-width="15.0" opacity="0.40" />
+            <circle cx="256" cy="256" r="112.0" fill="none" stroke="#4a4456" stroke-width="2" opacity="0.7" />
+            <circle cx="256" cy="256" r="97.0" fill="none" stroke="#0b0a10" stroke-width="15.0" opacity="0.49" />
+            <circle cx="256" cy="256" r="90.5" fill="none" stroke="#4a4456" stroke-width="2" opacity="0.7" />
+            <circle cx="256" cy="256" r="75.5" fill="none" stroke="#0b0a10" stroke-width="15.0" opacity="0.59" />
+            <circle cx="256" cy="256" r="69.0" fill="none" stroke="#4a4456" stroke-width="2" opacity="0.7" />
+          </g>
+          <circle cx="256" cy="256" r="98" fill="url(#mk-glow)" />
+          <circle cx="256" cy="256" r="70" fill="#000" />
+          <circle cx="256" cy="256" r="62" fill="url(#mk-glass)" />
+          <circle cx="256" cy="256" r="28.1" fill="#0a0612" />
+          <ellipse cx="236" cy="234" rx="22.7" ry="13.0" transform="rotate(-35 236 234)" fill="#ffe3f1" opacity=".9" />
+          <circle cx="272" cy="272" r="7.6" fill="#fff" opacity=".9" />
+          <path
+            d="M120,120 Q256,190 392,120"
+            fill="none"
+            stroke="url(#mk-metal)"
+            stroke-width="3"
+            opacity=".4"
+            stroke-linecap="round"
+          />
+          <ellipse cx="180" cy="180" rx="60" ry="15" transform="rotate(-45 180 180)" fill="#fff" opacity=".15" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <header class="bar">
+      <div class="frame">
+        <a class="logo" href="#topo" aria-label="É Golpe?, início"
+          ><svg aria-hidden="true"><use href="#mark" /></svg>É Golpe?</a
+        >
+        <nav aria-label="Seções">
+          <ul>
+            <li><a href="#testar">Testar</a></li>
+            <li><a href="#checa">O que checa</a></li>
+            <li><a href="#acervo">Acervo</a></li>
+            <li><a href="#numeros">Os números</a></li>
+            <li><a href="#perguntas">Perguntas</a></li>
+          </ul>
+        </nav>
+        <a class="btn btn--grad btn--sm" href="#testar">Testar grátis</a>
+      </div>
+    </header>
+
+    <main id="topo">
+      <section class="hero" aria-labelledby="titulo">
+        <div class="marquee" aria-hidden="false">
+          <div class="marquee__track">
+            <h1 id="titulo">É golpe?</h1>
+            <span class="ghost" aria-hidden="true">Confere antes.</span>
+            <span aria-hidden="true">É golpe?</span>
+            <span class="ghost" aria-hidden="true">Confere antes.</span>
+          </div>
+        </div>
+
+        <div class="frame">
+          <div class="grid">
+            <div class="cell has-label h-about">
+              <span class="micro">Sobre o É Golpe?</span>
+              <div>
+                <p class="lead">
+                  Recebeu um link, um boleto ou um pedido de Pix estranho? Encaminhe e receba
+                  <em>um semáforo e o que fazer</em>, antes de clicar ou pagar.
+                </p>
+                <ul class="ticks">
+                  <li>Funciona no WhatsApp e no Telegram</li>
+                  <li>Grátis e de código aberto</li>
+                  <li>Não guarda suas mensagens</li>
+                </ul>
+              </div>
+              <div class="ctas">
+                <a class="btn btn--grad" href="#testar"
+                  >Colar uma mensagem
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" /></svg
+                ></a>
+                <a class="btn btn--line" href="#numeros">Ver os números</a>
+              </div>
+            </div>
+
+            <div class="cell has-label h-stat">
+              <span class="micro">Brasil · 2025</span>
+              <strong>258</strong>
+              <p>estelionatos registrados por hora, segundo o Anuário Brasileiro de Segurança Pública 2026.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="band" aria-hidden="true">
+        <div class="frame">
+          <span>Encaminhe</span><span>·</span><span>Confira</span><span>·</span><span>Não pague</span>
+        </div>
+      </div>
+
+      <section class="sec demo" id="testar" aria-labelledby="t-testar">
+        <div class="frame">
+          <div class="sec-head">
+            <div>
+              <span class="kicker">Teste agora</span>
+              <h2 id="t-testar">Cole a mensagem suspeita.</h2>
+            </div>
+            <p>
+              É o mesmo motor que responde no bot. Aqui ele roda inteiro no seu navegador, então nada do que você cola
+              sai do seu computador.
+            </p>
+          </div>
+          <div class="grid">
+            <div class="cell has-label">
+              <label class="micro" for="message">Mensagem</label>
+              <textarea
+                id="message"
+                maxlength="5000"
+                spellcheck="false"
+                placeholder="Cole aqui a mensagem, o link, o boleto ou o Pix copia e cola"
+              ></textarea>
+              <div class="demo-meta"><span id="count">0 / 5000</span><span>exemplos fictícios</span></div>
+              <div class="examples" id="examples" role="group" aria-label="Exemplos de golpe"></div>
+            </div>
+            <div class="cell has-label" id="result-cell">
+              <span class="micro">Veredito</span>
+              <div id="result" aria-live="polite">
+                <div class="verdict" data-level="inconclusive">
+                  <span class="lamp" aria-hidden="true"></span>
+                  <h3>Não achei nada para checar</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec checks" id="checa" aria-labelledby="t-checa">
+        <div class="frame">
+          <div class="sec-head">
+            <div>
+              <span class="kicker">O que checa</span>
+              <h2 id="t-checa">Mais que palavra-chave. Conta de verdade.</h2>
+            </div>
+            <p>Cada veredito vem com os motivos, para a pessoa entender o golpe e reconhecer o próximo sozinha.</p>
+          </div>
+          <div class="grid">
+            <article class="cell has-label check">
+              <span class="micro">Roteiros</span>
+              <span class="outline" aria-hidden="true">“ ”</span>
+              <h3>Conversa de golpista</h3>
+              <p>
+                23 roteiros e 2 combinações: falso parente, falsa central, código por SMS, comprador que paga a mais,
+                taxa de encomenda, trabalho fácil e lucro garantido.
+              </p>
+            </article>
+            <article class="cell has-label check">
+              <span class="micro">Links</span>
+              <span class="outline" aria-hidden="true">://</span>
+              <h3>Site falso</h3>
+              <p>
+                Marca em domínio que não é dela (<code>itau-seguranca.com</code>), letras trocadas, encurtador, IP e
+                idade do domínio pelo RDAP.
+              </p>
+            </article>
+            <article class="cell has-label check">
+              <span class="micro">Boletos</span>
+              <span class="outline" aria-hidden="true">R$</span>
+              <h3>Boleto adulterado</h3>
+              <p>
+                Confere os dígitos verificadores da FEBRABAN e mostra banco, valor e vencimento antes de você pagar.
+              </p>
+            </article>
+            <article class="cell has-label check">
+              <span class="micro">Pix</span>
+              <span class="outline" aria-hidden="true">Pix</span>
+              <h3>Recebedor trocado</h3>
+              <p>
+                Lê o copia e cola, confere o CRC16 e avisa quando a mensagem cita uma marca mas o dinheiro vai para
+                outra pessoa.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec acervo" id="acervo" aria-labelledby="t-acervo">
+        <div class="frame">
+          <div class="sec-head">
+            <div>
+              <span class="kicker">Acervo</span>
+              <h2 id="t-acervo">Golpes documentados, um por um.</h2>
+            </div>
+            <p>
+              Cada caso traz os sinais de alerta, uma origem típica e o que fazer. Use “Testar no detector” para ver o
+              motor analisar o exemplo.
+            </p>
+          </div>
+          <div class="grid">
+            <div class="cell acervo-tools">
+              <label class="search">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.5-3.5" />
+                </svg>
+                <span class="sr">Buscar no acervo</span>
+                <input
+                  id="acervo-busca"
+                  type="search"
+                  placeholder="Buscar: banco, Correios, OLX, boleto…"
+                  autocomplete="off"
+                />
+              </label>
+              <div class="filter-row">
+                <div class="chips" id="acervo-categorias" role="group" aria-label="Categoria"></div>
+                <label class="select">
+                  <span class="micro">Canal</span>
+                  <select id="acervo-canal"></select>
+                </label>
+              </div>
+              <p class="acervo-count" id="acervo-count" aria-live="polite"></p>
+            </div>
+          </div>
+          <div class="grid cases" id="acervo-lista" style="border-top: 0"></div>
+        </div>
+      </section>
+
+      <section class="sec sheets" id="numeros" aria-labelledby="t-numeros">
+        <div class="frame">
+          <div class="sec-head">
+            <div>
+              <span class="kicker">Os números do 171</span>
+              <h2 id="t-numeros">O golpe virou o crime do Brasil.</h2>
+            </div>
+            <p>
+              Dados públicos do Fórum Brasileiro de Segurança Pública e da Febraban, organizados em planilhas. Troque a
+              aba para ver cada recorte e copie os dados em CSV.
+            </p>
+          </div>
+
+          <div class="stats">
+            <div class="grid">
+              <div class="cell has-label stat">
+                <span class="micro">Registros em 2025</span>
+                <strong class="grad">2.261.055</strong>
+                <p>boletins de estelionato no país, 3,1% a mais que em 2024.</p>
+              </div>
+              <div class="cell has-label stat">
+                <span class="micro">Desde 2018</span>
+                <strong>+429,8%</strong>
+                <p>de crescimento em sete anos, enquanto os roubos caíram.</p>
+              </div>
+              <div class="cell has-label stat">
+                <span class="micro">Vítimas em 12 meses</span>
+                <strong>26,3 mi</strong>
+                <p>de brasileiros (15,8%) dizem ter caído em golpe pela internet ou celular.</p>
+              </div>
+              <div class="cell has-label stat">
+                <span class="micro">Prejuízo em 2024</span>
+                <strong>R$ 10,1 bi</strong>
+                <p>perdidos em fraudes bancárias, segundo a Febraban. Alta de 17%.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid" style="border-top: 0">
+            <div class="cell sheet">
+              <div class="sheet-toolbar">
+                <div class="fx" id="fx"><b>fx</b><span></span></div>
+                <button class="btn btn--line btn--sm" type="button" id="copy-csv">Copiar CSV</button>
+              </div>
+              <div class="table-wrap" id="sheet-table"></div>
+              <div class="tabs" role="tablist" aria-label="Planilhas" id="sheet-tabs"></div>
+            </div>
+            <div class="cell has-label chart-cell">
+              <span class="micro" id="chart-label">Gráfico</span>
+              <h3 id="chart-title"></h3>
+              <div class="chart" id="chart"></div>
+              <p class="note" id="chart-note"></p>
+              <p class="source" id="chart-source"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec faq" id="perguntas" aria-labelledby="t-faq">
+        <div class="frame">
+          <div class="sec-head">
+            <div>
+              <span class="kicker">Perguntas</span>
+              <h2 id="t-faq">Antes de você encaminhar.</h2>
+            </div>
+          </div>
+          <div class="grid">
+            <div class="cell">
+              <h3>Vocês guardam minhas mensagens?</h3>
+              <p>
+                Não. O bot analisa e descarta. O servidor registra só a rota e o tempo de resposta, nunca o conteúdo. Na
+                demo desta página, a análise nem sai do seu navegador.
+              </p>
+            </div>
+            <div class="cell">
+              <h3>Quanto custa?</h3>
+              <p>Nada. É um projeto de código aberto, feito com serviços gratuitos de ponta a ponta.</p>
+            </div>
+            <div class="cell">
+              <h3>E se ele errar?</h3>
+              <p>
+                Pode acontecer. Por isso existe o amarelo: quando não há certeza, ele pede para confirmar por outro
+                canal. E o verde nunca diz que é seguro, só que não achou sinais de golpe.
+              </p>
+            </div>
+            <div class="cell">
+              <h3>Caí no golpe. E agora?</h3>
+              <p>
+                Ligue para o seu banco pelo número do cartão e peça o bloqueio e a devolução pelo MED do Pix. Depois
+                registre um boletim de ocorrência, que pode ser feito pela internet.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="frame">
+        <div class="foot">
+          <div>
+            <a class="logo" href="#topo" aria-label="É Golpe?, início"
+              ><svg aria-hidden="true"><use href="#mark" /></svg>É Golpe?</a
+            >
+            <p>Detector de golpes gratuito para WhatsApp e Telegram. Encaminhe antes de clicar ou pagar.</p>
+          </div>
+          <div>
+            <h4 class="micro">Produto</h4>
+            <ul>
+              <li><a href="#testar">Testar agora</a></li>
+              <li><a href="#checa">O que checa</a></li>
+              <li><a href="#acervo">Acervo de golpes</a></li>
+              <li><a href="#numeros">Os números do 171</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="micro">Código</h4>
+            <ul>
+              <li><a href="https://github.com/henriqueribeiroleonardo1/e-golpe">GitHub</a></li>
+              <li><a href="https://github.com/henriqueribeiroleonardo1/e-golpe#rodando">Rodar o bot</a></li>
+              <li><a href="https://github.com/henriqueribeiroleonardo1/e-golpe/blob/main/LICENSE">Licença MIT</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="micro">Fontes</h4>
+            <ul>
+              <li>
+                <a href="https://forumseguranca.org.br/publicacoes/anuario-brasileiro-de-seguranca-publica/"
+                  >Anuário FBSP</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://www.poder360.com.br/poder-economia/golpes-causaram-prejuizo-de-r-101-bi-em-2024-diz-febraban/"
+                  >Febraban</a
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <span class="wordmark" aria-hidden="true">É GOLPE?</span>
+      <div class="frame">
+        <div class="legal">
+          <span>© 2026 É Golpe? · por Henrique Ribeiro Leonardo</span>
+          <span>TypeScript · zero dependências de runtime</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="e-golpe.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
